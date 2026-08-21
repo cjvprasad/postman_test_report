@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Postman API Test Report & Comparator</title>
+<style>
+:root{
+ --bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#667085;--border:#e4e7ec;
+ --green:#16a34a;--red:#dc2626;--amber:#d97706;--blue:#2563eb;
+ --greenbg:#ecfdf3;--redbg:#fff1f2;--bluebg:#eff6ff;--shadow:0 8px 28px rgba(16,24,40,.07)
+}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+.app{max-width:1600px;margin:auto;padding:26px}
+h1{margin:0 0 5px;font-size:28px}.subtitle{color:var(--muted);margin-bottom:20px}
+.mode{display:flex;gap:8px;margin-bottom:14px}.mode button{background:#fff;border:1px solid var(--border);padding:10px 18px;border-radius:9px;cursor:pointer;font-weight:700;color:#344054}
+.mode button.active{background:#111827;color:#fff;border-color:#111827}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.input-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.input-card h3{margin:0 0 9px;font-size:14px}.input-card small{color:var(--muted)}
+textarea{width:100%;min-height:270px;margin-top:9px;border:1px solid var(--border);border-radius:9px;padding:13px;font:12px Consolas,monospace;resize:vertical;outline:none}
+textarea:focus{border-color:var(--blue)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.toolbar button{border:0;border-radius:9px;padding:10px 15px;font-weight:700;cursor:pointer}
+.primary{background:#111827;color:#fff}.secondary{background:#fff;border:1px solid var(--border)!important;color:#344054}
+.error{display:none;background:var(--redbg);border:1px solid #fecdd3;color:#991b1b;padding:11px;border-radius:9px;margin:12px 0}
+.summary{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;margin:18px 0}
+.stat{background:#fff;border:1px solid var(--border);border-radius:11px;padding:14px;box-shadow:var(--shadow)}
+.stat .value{font-size:23px;font-weight:800}.stat .label{font-size:11px;color:var(--muted);margin-top:3px}
+.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:9px}.progress span{display:block;height:100%;background:var(--green)}
+.scenario{background:#fff;border:1px solid var(--border);border-radius:13px;margin:13px 0;box-shadow:var(--shadow);overflow:hidden}
+.scenario summary{list-style:none;cursor:pointer;padding:14px 17px;display:flex;align-items:center;gap:10px}.scenario summary::-webkit-details-marker{display:none}
+.scenario-title{font-weight:800;flex:1}.path{font-size:11px;color:var(--muted)}
+.badge{border-radius:999px;padding:4px 9px;font-size:11px;font-weight:800;white-space:nowrap}
+.pass{background:#dcfce7;color:#166534}.fail{background:#fee2e2;color:#991b1b}.changed{background:#fef3c7;color:#92400e}.neutral{background:#f2f4f7;color:#475467}
+table{width:100%;border-collapse:collapse}th,td{padding:10px 13px;border-top:1px solid var(--border);text-align:left;vertical-align:top;font-size:12px}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:#fafafa}
+.status.ok{color:var(--green);font-weight:800}.status.bad{color:var(--red);font-weight:800}
+.key{font:11px Consolas,monospace}.errorbox{color:#991b1b;line-height:1.4}
+details.json details{margin-top:6px} details.json summary{display:block;padding:0;color:var(--blue);background:none;font-size:11px}
+pre{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:7px;font-size:10px;margin:7px 0 0;max-height:330px;overflow:auto}
+.compare-card{margin:0;border-top:1px solid var(--border);padding:14px 16px}.compare-title{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.side-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.side{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+.side h4{margin:0;padding:9px 11px;background:#f8fafc;font-size:12px}.side.passside h4{color:#166534}.side.failside h4{color:#991b1b}
+.side-body{padding:11px}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.meta span{font:11px Consolas,monospace;background:#f2f4f7;padding:4px 6px;border-radius:5px}
+.diff{margin-top:8px;border-radius:7px;overflow:hidden;border:1px solid var(--border);background:#fff}
+.diffline{font:10px/1.5 Consolas,monospace;padding:2px 7px;white-space:pre-wrap;word-break:break-word}
+.diffline.same{background:#fff;color:#475467}.diffline.add{background:#ecfdf3;color:#166534}.diffline.remove{background:#fff1f2;color:#991b1b}
+.missing{padding:12px;color:#667085;font-style:italic}
+.notice{padding:11px 13px;background:var(--bluebg);color:#1d4ed8;border-radius:9px;font-size:12px;margin:10px 0}
+@media(max-width:900px){.input-grid,.side-grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}.app{padding:13px}}
+@media print{.input-area,.toolbar,.mode{display:none!important}body{background:#fff}.app{max-width:none;padding:0}.scenario{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="input-area">
+    <h1>Postman API Test Report</h1>
+    <div class="subtitle">Generate a readable report or compare two Postman <b>allResponses</b> JSON results.</div>
+
+    <div class="mode">
+      <button id="singleBtn" class="active" onclick="setMode('single')">Single Report</button>
+      <button id="compareBtn" onclick="setMode('compare')">Compare Two Results</button>
+    </div>
+
+    <div id="singleInput" class="input-grid">
+      <div class="input-card">
+        <h3>Test Result JSON</h3>
+        <small>Paste your allResponses JSON.</small>
+        <textarea id="json1" placeholder='Paste allResponses JSON here...'></textarea>
+      </div>
+    </div>
+
+    <div id="compareInput" class="input-grid" style="display:none">
+      <div class="input-card">
+        <h3>Result A — Previous / Baseline</h3>
+        <small>Paste the first allResponses JSON.</small>
+        <textarea id="jsonA" placeholder='Paste first allResponses JSON here...'></textarea>
+      </div>
+      <div class="input-card">
+        <h3>Result B — Current / New</h3>
+        <small>Paste the second allResponses JSON.</small>
+        <textarea id="jsonB" placeholder='Paste second allResponses JSON here...'></textarea>
+      </div>
+    </div>
+
+    <div id="error" class="error"></div>
+    <div class="toolbar">
+      <button class="primary" onclick="generate()">Generate Report</button>
+      <button class="secondary" onclick="loadExample()">Load Example</button>
+      <button class="secondary" onclick="clearInputs()">Clear</button>
+    </div>
+  </div>
+
+  <div id="report"></div>
+</div>
+
+<script>
+let mode='single';
+
+function setMode(m){
+  mode=m;
+  document.getElementById('singleBtn').classList.toggle('active',m==='single');
+  document.getElementById('compareBtn').classList.toggle('active',m==='compare');
+  document.getElementById('singleInput').style.display=m==='single'?'grid':'none';
+  document.getElementById('compareInput').style.display=m==='compare'?'grid':'none';
+  document.getElementById('report').innerHTML='';
+  document.getElementById('error').style.display='none';
+}
+
+function safeJson(v){
+  if(typeof v!=='string') return v;
+  try{return JSON.parse(v)}catch(e){return v}
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function isReq(n){return n&&typeof n==='object'&&Object.hasOwn(n,'status')&&Object.hasOwn(n,'response')}
+
+function collect(node,path=[],out=[]){
+  if(!node||typeof node!=='object')return out;
+  if(isReq(node)){out.push({path,data:node});return out}
+  Object.entries(node).forEach(([k,v])=>collect(v,path.concat(k),out));
+  return out;
+}
+
+function requestMap(data){
+  const map=new Map();
+  collect(data).forEach(x=>map.set(x.path.join(' / '),x));
+  return map;
+}
+
+function extractKey(r){
+  r=safeJson(r);
+  if(!r||typeof r!=='object')return {label:'Response',value:String(r??'')};
+  if(r.clientId)return {label:'clientId',value:r.clientId};
+  if(r.orderId)return {label:'orderId',value:r.orderId};
+  if(r.success!==undefined)return {label:'success',value:String(r.success)};
+  if(r.errorCode||r.errorMessage)return {label:r.errorCode||'Error',value:r.errorMessage||''};
+  const first=Object.entries(r)[0];
+  return first?{label:first[0],value:String(first[1])}:{label:'Response',value:'{}'};
+}
+
+function getError(r){
+  r=safeJson(r); if(!r||typeof r!=='object')return '';
+  const e=Array.isArray(r.errors)?r.errors[0]:null;
+  return e ? `${e.errorCode||''}${e.errorCode&&e.errorMessage?' — ':''}${e.errorMessage||''}`
+           : (r.errorMessage?`${r.errorCode?r.errorCode+' — ':''}${r.errorMessage}`:'');
+}
+
+function normalize(v){
+  v=safeJson(v);
+  return JSON.stringify(v,null,2);
+}
+
+function diffLines(a,b){
+  const A=normalize(a).split('\\n'),B=normalize(b).split('\\n');
+  const n=A.length,m=B.length,dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=A[i]===B[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  let i=0,j=0,out=[];
+  while(i<n&&j<m){
+    if(A[i]===B[j]){out.push({type:'same',text:A[i]});i++;j++}
+    else if(dp[i+1][j]>=dp[i][j+1]){out.push({type:'remove',text:'- '+A[i]});i++}
+    else{out.push({type:'add',text:'+ '+B[j]});j++}
+  }
+  while(i<n)out.push({type:'remove',text:'- '+A[i++]});
+  while(j<m)out.push({type:'add',text:'+ '+B[j++]});
+  return out;
+}
+
+function jsonBlock(r){
+  return `<details class="json"><summary>View full JSON</summary><pre>${esc(normalize(r))}</pre></details>`;
+}
+
+function summaryCards(total,ok,failed,changed,missing,label){
+  const pct=total?Math.round(ok/total*100):0;
+  return `<div class="summary">
+    <div class="stat"><div class="value">${total}</div><div class="label">${label}</div></div>
+    <div class="stat"><div class="value" style="color:var(--green)">${ok}</div><div class="label">Successful</div></div>
+    <div class="stat"><div class="value" style="color:var(--red)">${failed}</div><div class="label">Failed</div></div>
+    ${mode==='compare'?`<div class="stat"><div class="value" style="color:var(--amber)">${changed}</div><div class="label">Changed</div></div>
+    <div class="stat"><div class="value" style="color:var(--blue)">${missing}</div><div class="label">Added / Missing</div></div>`:''}
+    <div class="stat"><div class="value">${pct}%</div><div class="label">Success Rate</div><div class="progress"><span style="width:${pct}%"></span></div></div>
+  </div>`;
+}
+
+function scenarioGroups(data){
+  const map=new Map();
+  collect(data).forEach(x=>{
+    const p=x.path;
+    const scenario=p.length>1?p[p.length-2]:p[0]||'Root';
+    const parent=p.slice(0,-1).join(' / ');
+    const key=parent||scenario;
+    if(!map.has(key))map.set(key,{scenario,path:parent,items:[]});
+    map.get(key).items.push(x);
+  });
+  return map;
+}
+
+function generateSingle(data){
+  const groups=scenarioGroups(data); let total=0,ok=0,failed=0;
+  groups.forEach(g=>g.items.forEach(x=>{total++;Number(x.data.status)>=200&&Number(x.data.status)<300?ok++:failed++}));
+  let html=`<h1>Postman API Test Report</h1>${summaryCards(total,ok,failed,0,0,'Requests')}
+  <div class="toolbar"><button class="secondary" onclick="window.print()">Print / Save PDF</button></div>`;
+  [...groups.values()].forEach((g,idx)=>{
+    const pass=g.items.every(x=>Number(x.data.status)>=200&&Number(x.data.status)<300);
+    html+=`<details class="scenario" ${idx===0?'open':''}><summary><span class="scenario-title">${esc(g.scenario)}</span><span class="path">${esc(g.path)}</span><span class="badge ${pass?'pass':'fail'}">${pass?'✓ PASSED':'✗ FAILED'}</span><span class="badge neutral">${g.items.length} requests</span></summary>
+    <table><thead><tr><th>Request</th><th>Status</th><th>Result</th><th>Response</th><th>Details</th></tr></thead><tbody>`;
+    g.items.forEach(x=>{
+      const d=x.data,s=Number(d.status)>=200&&Number(d.status)<300,r=safeJson(d.response),k=extractKey(r),err=getError(r);
+      html+=`<tr><td><b>${esc(x.path[x.path.length-1])}</b></td><td class="status ${s?'ok':'bad'}">${s?'🟢':'🔴'} ${esc(d.status)}<br><span style="font-size:10px;font-weight:500">${esc(d.statusText)}</span></td><td class="result ${s?'ok':'bad'}">${s?'SUCCESS':'FAILED'}</td><td class="key"><b>${esc(k.label)}:</b> ${esc(k.value)}</td><td>${err?`<div class="errorbox"><b>Error:</b> ${esc(err)}</div>`:''}${jsonBlock(r)}</td></tr>`;
+    });
+    html+=`</tbody></table></details>`;
+  });
+  return html;
+}
+
+function generateCompare(a,b){
+  const A=requestMap(a),B=requestMap(b);
+  const keys=[...new Set([...A.keys(),...B.keys()])];
+  let changed=0,missing=0,same=0,ok=0,failed=0;
+  keys.forEach(k=>{
+    const x=A.get(k),y=B.get(k);
+    if(!x||!y)missing++;
+    else if(normalize(x.data.response)!==normalize(y.data.response)||x.data.status!==y.data.status||x.data.statusText!==y.data.statusText)changed++;
+    else same++;
+    if(y){Number(y.data.status)>=200&&Number(y.data.status)<300?ok++:failed++}
+  });
+
+  const scenarioMap=new Map();
+  keys.forEach(k=>{
+    const parts=k.split(' / '),scenario=parts.length>1?parts[parts.length-2]:parts[0];
+    const parent=parts.slice(0,-1).join(' / ')||scenario;
+    if(!scenarioMap.has(parent))scenarioMap.set(parent,{scenario,path:parent,keys:[]});
+    scenarioMap.get(parent).keys.push(k);
+  });
+
+  let html=`<h1>Postman API Result Comparison</h1>
+  <div class="notice"><b>Result A</b> is treated as the baseline and <b>Result B</b> as the current result. Green/red diff lines show what changed in the response JSON.</div>
+  ${summaryCards(keys.length,ok,failed,changed,missing,'Compared Requests')}
+  <div class="toolbar"><button class="secondary" onclick="window.print()">Print / Save PDF</button></div>`;
+
+  [...scenarioMap.values()].forEach((g,idx)=>{
+    const scenarioChanged=g.keys.some(k=>{
+      const x=A.get(k),y=B.get(k); return !x||!y||normalize(x.data.response)!==normalize(y.data.response)||x.data.status!==y.data.status||x.data.statusText!==y.data.statusText;
+    });
+    html+=`<details class="scenario" ${idx===0?'open':''}><summary><span class="scenario-title">${esc(g.scenario)}</span><span class="path">${esc(g.path)}</span><span class="badge ${scenarioChanged?'fail':'pass'}">${scenarioChanged?'⚠ CHANGED':'✓ SAME'}</span><span class="badge neutral">${g.keys.length} requests</span></summary>`;
+    g.keys.forEach(k=>{
+      const x=A.get(k),y=B.get(k),xd=x?.data,yd=y?.data;
+      const existsA=!!x,existsB=!!y;
+      const equal=existsA&&existsB&&normalize(xd.response)===normalize(yd.response)&&xd.status===yd.status&&xd.statusText===yd.statusText;
+      html+=`<div class="compare-card"><div class="compare-title"><b>${esc(k.split(' / ').pop())}</b><span class="badge ${equal?'pass':(!existsA||!existsB?'neutral':'changed')}">${equal?'✓ NO DIFFERENCE':(!existsA?'ONLY IN B':!existsB?'ONLY IN A':'⚠ DIFFERENCE')}</span></div>
+      <div class="side-grid">`;
+      [['A — Baseline',x,xd],['B — Current',y,yd]].forEach(([label,obj,d])=>{
+        if(!obj){html+=`<div class="side"><h4>${label}</h4><div class="missing">Request is not present in this result.</div></div>`;return}
+        const s=Number(d.status)>=200&&Number(d.status)<300,r=safeJson(d.response),keyv=extractKey(r),err=getError(r);
+        html+=`<div class="side ${s?'passside':'failside'}"><h4>${label}</h4><div class="side-body">
+          <div class="meta"><span>Status: ${esc(d.status)}</span><span>${esc(d.statusText)}</span><span>${esc(keyv.label)}: ${esc(keyv.value)}</span></div>
+          ${err?`<div class="errorbox"><b>Error:</b> ${esc(err)}</div>`:''}${jsonBlock(r)}
+        </div></div>`;
+      });
+      if(x&&y&&!equal){
+        const dl=diffLines(xd.response,yd.response);
+        html+=`</div><div class="diff">${dl.map(d=>`<div class="diffline ${d.type}">${esc(d.text)}</div>`).join('')}</div>`;
+      }else html+=`</div>`;
+      html+=`</div>`;
+    });
+    html+=`</details>`;
+  });
+  return html;
+}
+
+function generate(){
+  const error=document.getElementById('error');error.style.display='none';
+  try{
+    if(mode==='single'){
+      const data=JSON.parse(document.getElementById('json1').value);
+      document.getElementById('report').innerHTML=generateSingle(data);
+    }else{
+      const a=JSON.parse(document.getElementById('jsonA').value),b=JSON.parse(document.getElementById('jsonB').value);
+      document.getElementById('report').innerHTML=generateCompare(a,b);
+    }
+    document.getElementById('report').scrollIntoView({behavior:'smooth'});
+  }catch(e){error.textContent='Invalid JSON or report data: '+e.message;error.style.display='block'}
+}
+
+function clearInputs(){
+  ['json1','jsonA','jsonB'].forEach(id=>{if(document.getElementById(id))document.getElementById(id).value=''});
+  document.getElementById('report').innerHTML='';
+  document.getElementById('error').style.display='none';
+}
+
+function loadExample(){
+  const sample={
+    "200-800-800":{
+      "TM100_EP Copy 3":{"response":{"clientId":"100_14"},"status":200,"statusText":"OK"},
+      "200 - Spain Copy 3":{"response":{"orderId":"O_67"},"status":200,"statusText":"OK"},
+      "800 Copy 3":{"response":{"orderId":"O_67"},"status":200,"statusText":"OK"},
+      "800 Copy 4":{"response":{"errorCode":"T145","errorMessage":"Required fields are missing, please fix and submit again","errors":[{"errorCode":"T154","errorMessage":"OrderId is already financially approved.","property":"orderId"}],"messageType":"ERROR"},"status":400,"statusText":"Bad Request"}
+    }
+  };
+  if(mode==='single')document.getElementById('json1').value=JSON.stringify(sample,null,2);
+  else{
+    document.getElementById('jsonA').value=JSON.stringify(sample,null,2);
+    const modified=JSON.parse(JSON.stringify(sample));
+    modified["200-800-800"]["800 Copy 3"].response.orderId="O_999";
+    modified["200-800-800"]["800 Copy 4"].response.errors[0].errorMessage="Different error message";
+    document.getElementById('jsonB').value=JSON.stringify(modified,null,2);
+  }
+}
+</script>
+</body>
+</html>
